@@ -124,6 +124,6 @@ BettingCircle.prototype.update = function(delta){
 	if(this.imageLoaded){
 		this.mesh.position.set(this.radius*Math.cos(this.t - Math.PI/2),this.z,this.radius*Math.sin(this.t - Math.PI/2));
 		this.mesh.rotation.set(0,-this.t,0);
-		//this.t += delta * Math.PI/ this.fullRotationTime;
+		this.t += delta * Math.PI/ this.fullRotationTime;
 	}
 }
