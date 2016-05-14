@@ -324,6 +324,6 @@ THREE.FlyControls = function ( object, domElement ) {
 };
 
 //copypasted fly controls code
-window.setInterval(function(){controls.update(0.1);},66);
+window.setInterval(function(){if(flyEnabled)controls.update(0.1);},1000/60);
 
 
