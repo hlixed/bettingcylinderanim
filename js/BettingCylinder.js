@@ -1,3 +1,5 @@
+"use strict";
+
 function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	//Class to control the result hexagon-tile animation
 	//canvas_elem: a <canvas> element to draw the animation to
@@ -16,8 +18,11 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.scene.add( new THREE.AmbientLight( 0xaaaaaa) );
 
 	this.camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1,200);
-	this.camera.position.set(0,0,0.);
-	//this.camera.rotation.set(0,-Math.PI/2,0);
+
+	//these two values were chosen by hand to give the turned effect
+	this.camera.position.set(-0.211,0.36,-2.69); 
+	//this.camera.position.set(-0.211,0.86,-2.69); 
+	this.camera.rotation.set(0.34,-1.3,-0.4);
 	this.scene.add(this.camera);
 
 	//add some light
@@ -51,12 +56,20 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 
 	*/
 
-	for(var i=0;i<2*Math.PI; i += 0.25){
+	var radius = 0.25;
+	var spacing = 0.1;
 
-		this.circles.push(new BettingCircle(this.asset_folder+"gray.png",this.scene,0, i));
-		this.circles.push(new BettingCircle(this.asset_folder+"red.png",this.scene,0.5, i));
-		this.circles.push(new BettingCircle(this.asset_folder+"blue.png",this.scene,1, i));
+	for(var i=0;i<Math.PI*1.9; i += 0.15){
 
+		for(var z = -2; z < 6; z++){
+			//generate random url for testing
+			var randIndex = parseInt(Math.random()*3);
+			var url = [this.asset_folder+"red.png",this.asset_folder+"gray.png",this.asset_folder+"blue.png"][randIndex];
+
+			//push new circle
+			this.circles.push(new BettingCircle(url,this.scene, z * (radius*2 + spacing), i));
+
+		}
 	}
 
 }
@@ -93,20 +106,14 @@ function BettingCircle(image_url, scene, z, initialRotation){
 	this.imageLoaded = false; //todo: make image loading the responsibility of something else
 	this.fullRotationTime = 20; //amount of time in s to make a full 360 degree rotation
 
-	console.log(this.t);
-
-	this.radius = 3//5;
+	this.radius = 5;
 
 	var loader = new THREE.TextureLoader();
 	loader.load(image_url,function(tex){
-		console.log(this);
-
-
 		this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshPhongMaterial({color:0xffffff,map: tex}));
 		scene.add(this.mesh);
+		this.update(0);
 		this.imageLoaded = true;
-		console.log("Loaded!");
-		console.log(this);
 
 	}.bind(this));
 }
@@ -115,9 +122,8 @@ BettingCircle.prototype.geometry = new THREE.CircleGeometry(0.25,30);
 
 BettingCircle.prototype.update = function(delta){
 	if(this.imageLoaded){
-		this.mesh.position.set(this.radius*Math.cos(this.t),this.z,this.radius*Math.sin(this.t));
-		this.mesh.rotation.set(0,-Math.PI/2-this.t,0);
-		//this.t += delta*Math.PI/this.fullRotationTime;
-		this.t += delta;
+		this.mesh.position.set(this.radius*Math.cos(this.t - Math.PI/2),this.z,this.radius*Math.sin(this.t - Math.PI/2));
+		this.mesh.rotation.set(0,-this.t,0);
+		//this.t += delta * Math.PI/ this.fullRotationTime;
 	}
 }
