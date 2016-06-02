@@ -17,18 +17,37 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.scene = new THREE.Scene();
 	this.scene.add( new THREE.AmbientLight( 0xaaaaaa) );
 
+	//an aspect ratio of 3.5 or above will show things that shouldn't be shown
 	this.camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1,200);
 
 	//these two values were chosen by hand to give the turned effect
-	this.camera.position.set(-0.211,0.36,-2.69); 
-	//this.camera.position.set(-0.211,0.86,-2.69); 
-	this.camera.rotation.set(0.34,-1.3,-0.4);
+	//this.camera.position.set(-1.216,1.46,-2.69); 
+	//this.camera.rotation.set(-0.2,-1.7781575891219626, -0.2403978208986089)
+	this.camera.position.set(-1.216592150694993,1.5282160696265034,-2.63726972605486)
+	this.camera.rotation.set(0.010216663322211847,-0.700083444068137,-0.41575476313921605)
+
 	this.scene.add(this.camera);
 
 	//add some light
 	this.light =  new THREE.DirectionalLight( 0xffffff, this.startingLightIntensity) 
 	this.light.position.set(0,0,3);
 	this.scene.add( this.light );
+
+	//add the background gradient
+	var geometry = new THREE.CubeGeometry(100,100,100)
+
+	//right face
+	geometry.faces[1].vertexColors = [new THREE.Color(0xafcdd0), new THREE.Color(0xd6f0ff), new THREE.Color(0xe1c1b0)]
+
+	//top left face
+	geometry.faces[10].vertexColors = [new THREE.Color(0xe1c1b0), new THREE.Color(0xd6f0ff), new THREE.Color(0x7a8f91)]
+
+	//bottom triangle face
+	geometry.faces[11].vertexColors = [new THREE.Color(0xd6f0ff), new THREE.Color(0xd6f0ff), new THREE.Color(0x7a8f91)]
+
+	this.colorfulbox =  new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({shading: THREE.FlatShading, side: THREE.BackSide, vertexColors: THREE.VertexColors}));
+	this.scene.add( this.colorfulbox );
+
                                                                                
 	// Renderer
 	var clear_color = clear_color || 0x000000;
@@ -45,8 +64,6 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 		this.hex_geometry = mesh.children[0].geometry;
 	}.bind(this));
 
-
-
 	loader.load(this.asset_folder+"red.png",function(tex){
 		this.textures[this.asset_folder+"red.png"] = tex;
 	}.bind(this));
@@ -59,7 +76,7 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	var radius = 0.25;
 	var spacing = 0.1;
 
-	for(var i=0;i<Math.PI*1.9; i += 0.15){
+	for(var i=0;i<Math.PI*2; i += 0.15){
 
 		for(var z = -2; z < 6; z++){
 			//generate random url for testing
