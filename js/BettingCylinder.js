@@ -7,11 +7,11 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 
 	this.circles = [];
 
-
 	this.asset_folder = asset_folder || "static/bettingcylinderanim/"
 
 	//Clock to get deltas for each frame
 	this.clock = new THREE.Clock();
+	this.animtimer = 0;
 
 	//threejs constructs
 	this.scene = new THREE.Scene();
@@ -36,6 +36,7 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	//add the background gradient
 	var geometry = new THREE.CubeGeometry(100,100,100)
 
+	//color the gradient manually
 	//right face
 	geometry.faces[1].vertexColors = [new THREE.Color(0xafcdd0), new THREE.Color(0xd6f0ff), new THREE.Color(0xe1c1b0)]
 
@@ -64,27 +65,24 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 		this.hex_geometry = mesh.children[0].geometry;
 	}.bind(this));
 
-	loader.load(this.asset_folder+"red.png",function(tex){
-		this.textures[this.asset_folder+"red.png"] = tex;
-	}.bind(this));
-	loader.load(this.asset_folder+"blue.png",function(tex){
-		this.textures[this.asset_folder+"blue.png"] = tex;
-	}.bind(this));
-
 	*/
+
+	this.texturecache = new TextureCache();
 
 	var radius = 0.25;
 	var spacing = 0.1;
 
-	for(var i=0;i<Math.PI*2; i += 0.15){
+	for(let i=0;i<Math.PI*2; i += 0.15){
 
-		for(var z = -2; z < 6; z++){
+		for(let z = -2; z < 6; z++){
 			//generate random url for testing
-			var randIndex = parseInt(Math.random()*3);
-			var url = [this.asset_folder+"red.png",this.asset_folder+"gray.png",this.asset_folder+"blue.png"][randIndex];
+			let randIndex = parseInt(Math.random()*3);
+			let url = [this.asset_folder+"red.png",this.asset_folder+"gray.png",this.asset_folder+"blue.png"][randIndex];
 
-			//push new circle
-			this.circles.push(new BettingCircle(url,this.scene, z * (radius*2 + spacing), i));
+			this.texturecache.loadTexture(url,function(tex){
+				//push new circle
+				this.circles.push(new BettingCircle(tex,this.scene, z * (radius*2 + spacing), i));
+			}.bind(this));
 
 		}
 	}
@@ -113,34 +111,26 @@ BettingCylinder.prototype.update = function(delta){
 
 
 
-function BettingCircle(image_url, scene, z, initialRotation){
+function BettingCircle(tex, scene, z, initialRotation){
 	this.t = initialRotation || 0; //from 0 to ???
 				//0 should be about to be shown to the camera,
 				///and ??? should be offscreen, fully scrolled
 	this.z = z;
 
 	this.isDead = false;
-	this.imageLoaded = false; //todo: make image loading the responsibility of something else
 	this.fullRotationTime = 20; //amount of time in s to make a full 360 degree rotation
 
 	this.radius = 5;
 
-	var loader = new THREE.TextureLoader();
-	loader.load(image_url,function(tex){
-		this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshPhongMaterial({color:0xffffff,map: tex}));
-		scene.add(this.mesh);
-		this.update(0);
-		this.imageLoaded = true;
-
-	}.bind(this));
+	this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshPhongMaterial({color:0xffffff,map: tex}));
+	scene.add(this.mesh);
+	this.update(0);
 }
 
 BettingCircle.prototype.geometry = new THREE.CircleGeometry(0.25,30);
 
 BettingCircle.prototype.update = function(delta){
-	if(this.imageLoaded){
-		this.mesh.position.set(this.radius*Math.cos(this.t - Math.PI/2),this.z,this.radius*Math.sin(this.t - Math.PI/2));
-		this.mesh.rotation.set(0,-this.t,0);
-		this.t += delta * Math.PI/ this.fullRotationTime;
-	}
+	this.mesh.position.set(this.radius*Math.cos(this.t - Math.PI/2),this.z,this.radius*Math.sin(this.t - Math.PI/2));
+	this.mesh.rotation.set(0,-this.t,0);
+	this.t += delta * Math.PI/ this.fullRotationTime;
 }
