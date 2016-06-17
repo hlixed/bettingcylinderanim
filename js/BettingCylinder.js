@@ -78,6 +78,8 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 		"}else if(colorindex < 6.0){",
 			"return vec3(0.71, 0.60, 0.58);",
 		"}",
+		
+		"return vec3(0.71, 0.60, 0.58);", //chrome requires guaranteed returning
 
 	"}",
 
