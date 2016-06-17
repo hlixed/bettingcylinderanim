@@ -33,81 +33,67 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.light.position.set(0,0,3);
 	this.scene.add( this.light );
 
-	//add the background gradient
-	var geometry = new THREE.SphereGeometry(100,20,20)
-
-	//color the gradient manually
-	//right face
-
-	//colors: 0xafcdd0, 0xd6f0ff, 0xe1c1b0, 0x7a8f91
-
-
-	// A quick note on the for loop below: a normal SphereGeometry's faces look like this:
- 	//     |/|/|
-	// ... |/|/| ...
-
-	// the face manipulation is to creae this pattern:  |/|\|
-	//                                                  |\|/|
-
-	
-	for(var rowindex = 20*9; rowindex < 20*29; rowindex += 40){
-		for(var i=0;i<40;i+=4){
-			var index = rowindex + i;
-
-			//without this if-statement, the pattern would be
-			//  |/|\|
-			//  |/|\|/|\|
-			// so every other row, shift the vertices one to the right to make:
-			//  |/|\|     ==  |/|\|
-			//|/|\|/|\|       |\|/|
-			//Technically this leaves an alternating gap because when index+3 is taken below, it's not modded by 40 along the row, so indices 0 and 1 are never reached because of this +2 shift. However, it's not even showing, so I think it's safe.
-			if(rowindex % 80 == 20){
-				index = rowindex + (i+2)%40
-			}
-			//rearrange faces 0,1 mod 4 to form a triangle pattern
-			geometry.faces[index].c = geometry.faces[index+1].b
-			geometry.faces[index+1].a = geometry.faces[index].a
-			
-			geometry.faces[index].vertexColors = [new THREE.Color(0x0000ff), new THREE.Color(0xffffff), new THREE.Color(0x0000ff)];
-			geometry.faces[index+1].vertexColors = [new THREE.Color(0x0000ff), new THREE.Color(0x0000ff), new THREE.Color(0xffffff)];
-			geometry.faces[index+2].vertexColors = [new THREE.Color(0xffffff), new THREE.Color(0x0000ff), new THREE.Color(0x0000ff)];
-			geometry.faces[index+3].vertexColors = [new THREE.Color(0x0000ff), new THREE.Color(0xffffff), new THREE.Color(0x0000ff)];
-			
-		}
-	}
-
 	//experiment: shaders to get the triangle pulsating!
+	//Vertex colors are set up in the following way:
+	//All triangle centers have a green of 1.0
+	//All non-triangle centers have colors of 0x000000
+	//Every up-facing triangle has a blue of 1.0, while down-facing ones have a color of 0.0
 	var vShader = [
 	"varying vec3 vNormal;",
 	"varying vec3 vPosition;",
-	"varying vec2 vuv;",
 	"varying vec3 vcolor;",
 	"uniform float time;",
-	"vec3 getcolor(float time){",
-		"float lerpfrac = clamp(sin(time),0.0,1.0);",
-		"return vec3(0.68,0.80,0.81) * lerpfrac + vec3(0.88,0.75,0.69) * (1.0-lerpfrac);",
-	"}",
-
 	"void main() {",
-                "vcolor = getcolor(time + color.r);",
-		"//vcolor = color;",
+		"vcolor = color;",
 		"vPosition = position.xyz;",
 		"vNormal = normal.xyz;",
   		"gl_Position = projectionMatrix *",
-                "modelViewMatrix *",
-                "vec4(position,1.0);",
+                "    modelViewMatrix *",
+                "    vec4(position,1.0);",
 	"}"].join("\n")
 
 	var fShader = [
 	"varying vec3 vNormal;",
 	"varying vec3 vPosition;",
-	"varying vec2 vuv;",
 	"varying vec3 vcolor;",
 	"uniform float time;",
+	"vec3 getcolor(float time){",
+		"float lerpfrac = clamp(sin(time),0.0,1.0);",
+		"lerpfrac = mod(floor(time + 0.5),2.0);",
+		"float colorindex = mod(floor(time + 0.5),6.0);",
+		"if(colorindex < 1.0){",
+			"return vec3(0.65, 0.70, 0.71);",
+		"}else if(colorindex < 2.0){",
+			"return vec3(0.56, 0.59, 0.64);",
+		"}else if(colorindex < 3.0){",
+			"return vec3(0.59, 0.55, 0.64);",
+		"}else if(colorindex < 4.0){",
+			"return vec3(0.51, 0.63, 0.64);",
+		"}else if(colorindex < 5.0){",
+			"return vec3(0.52, 0.61, 0.60);", //may in fact be just a transition of surrounding two and not an actual color
+		"}else if(colorindex < 6.0){",
+			"return vec3(0.65, 0.71, 0.65);",
+		"}else if(colorindex < 6.0){",
+			"return vec3(0.67, 0.71, 0.61);",
+		"}else if(colorindex < 6.0){",
+			"return vec3(0.71, 0.60, 0.58);",
+		"}",
+
+	"}",
+
+	//helper function whose graph looks like:
+	//    _/
+	//   /
+	"float rampwaitramp(float x, float waitsize){",
+		"return step(0.0,x-waitsize)*(x-waitsize) + step(0.0,-x-waitsize)*(x+waitsize);",
+	"}",
+
 	"void main(){",
-	"  //gl_FragColor = vec4(clamp(sin(vPosition.x),0.0,1.0), clamp(sin(vPosition.z),0.0,1.0), 1.0, 1.0);", //A
-	"  //gl_FragColor = vec4(vNormal.x,vNormal.y, vNormal.z, 1.0);",
-	"  gl_FragColor = vec4(vcolor.rgb, 1.0);", 
+	//"  gl_FragColor = vec4(vcolor.rgb, 1.0);", //pure vertex colors
+
+	"    float isOutwardstri = (vcolor.b*2.0-1.0);", //1.0 if the triangle is going outwards, lerps to -1.0 if not, 0.0 at edges
+	"    float boolisOutwardstri = sign(clamp(vcolor.b,0.0,1.0));", //guaranteed to be only 1.0 or 0.0
+	"    gl_FragColor = vec4(getcolor(rampwaitramp(vcolor.r * isOutwardstri * 2.0,-0.1) + time/2.0),1.0);",
 	"}"].join("\n")
 
 	var uniforms = {
@@ -117,21 +103,21 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 		}
 	};
 
-	this.colorfulbox =  new THREE.Mesh(
-		geometry,
-		new THREE.ShaderMaterial({
-			side: THREE.BackSide,
-			vertexShader: vShader, 
-			fragmentShader: fShader,
-			vertexColors: THREE.VertexColors,
-			uniforms: uniforms,
-			})
-		);
+	new THREE.ColladaLoader().load(this.asset_folder+"bgtriangles.dae",function(mesh){
+		this.colorfulbox = mesh.scene.children[0];
+		this.colorfulbox.material = new THREE.ShaderMaterial({
+				side: THREE.BackSide,
+				vertexShader: vShader, 
+				fragmentShader: fShader,
+				vertexColors: THREE.VertexColors,
+				uniforms: uniforms,
+		})
+		this.colorfulbox.uniforms = uniforms;
+		this.scene.add( this.colorfulbox );
+	}.bind(this));
 
-	this.colorfulbox.uniforms = uniforms;
-	this.scene.add( this.colorfulbox );
 
-                                                                               
+                                         
 	// Renderer
 	var clear_color = clear_color || 0x000000;
 
@@ -182,7 +168,10 @@ BettingCylinder.prototype.update = function(delta){
 	}
 
 	//update BG
-	this.colorfulbox.uniforms.time.value = this.animtimer;
+	if(this.colorfulbox){
+		this.colorfulbox.uniforms.time.value = this.animtimer;
+		this.colorfulbox.rotation.z += delta/20;
+	}
 
 	//if any circles are dead
 
