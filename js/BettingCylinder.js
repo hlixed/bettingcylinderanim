@@ -29,7 +29,7 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.scene.add(this.camera);
 
 	//add some light
-	this.light =  new THREE.DirectionalLight( 0xffffff, this.startingLightIntensity) 
+	this.light =  new THREE.DirectionalLight( 0xffffff, 0.4) 
 	this.light.position.set(0,0,3);
 	this.scene.add( this.light );
 
@@ -236,7 +236,7 @@ BettingCylinder.prototype.update = function(delta){
 
 
 
-function BettingCircle(tex, scene, z, initialRotation){
+function BettingCircle(initialtex, scene, z, initialRotation){
 	this.t = initialRotation || 0; //from 0 to ???
 				//0 should be about to be shown to the camera,
 				///and ??? should be offscreen, fully scrolled
@@ -247,7 +247,7 @@ function BettingCircle(tex, scene, z, initialRotation){
 
 	this.radius = 5;
 
-	this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshPhongMaterial({color:0xffffff,map: tex}));
+	this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({color:0xffffff,map: initialtex}));
 	scene.add(this.mesh);
 	this.update(0);
 }
