@@ -138,6 +138,19 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	*/
 
 	this.texturecache = new TextureCache();
+	this.loadedTextures = [];
+
+	this.defaultTextureURLs = [this.asset_folder+"red.png",this.asset_folder+"gray.png",this.asset_folder+"blue.png"];
+	this.defaultTextures = [];
+
+	//load the default textures
+	//we're about to call this.texturecache.loadTexture on the same textures below; this is okay because TextureCache should ensure only one request is made per texture (and I'm lazy)
+	for(let i=0;i<this.defaultTextureURLs.length;i++){
+		this.texturecache.loadTexture(this.defaultTextureURLs[i],function(tex){
+			this.defaultTextures.push(tex);
+		}.bind(this));
+	}
+	
 
 	var radius = 0.25;
 	var spacing = 0.1;
@@ -145,10 +158,10 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	for(let i=0;i<Math.PI*2; i += 0.15){
 
 		for(let z = -2; z < 6; z++){
-			//generate random url for testing
-			let randIndex = parseInt(Math.random()*3);
-			let url = [this.asset_folder+"red.png",this.asset_folder+"gray.png",this.asset_folder+"blue.png"][randIndex];
-
+			//to start, load the default textures
+			let randIndex = parseInt(Math.random()*this.defaultTextureURLs.length);
+			let url = this.defaultTextureURLs[randIndex];
+			
 			this.texturecache.loadTexture(url,function(tex){
 				//push new circle
 				this.circles.push(new BettingCircle(tex,this.scene, z * (radius*2 + spacing), i));
@@ -158,6 +171,22 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	}
 
 }
+BettingCylinder.prototype.setNewImgList = function(imglist, includeDefaults){
+	//Function to set the textures to be used given an array containing the URLs
+	//imglist: an array of image URLs
+	//After being loaded, new circles about to appear onscreen will be given a random texture from the URLs provided.
+	includeDefaults = includeDefaults || true;
+
+	this.loadedTextures = [];
+	if(includeDefaults)imglist = imglist.concat(this.defaultTextureURLs);
+
+	for(var i=0;i<imglist.length;i++){
+		this.texturecache.loadTexture(imglist[i],function(tex){
+			this.loadedTextures.push(tex);
+		}.bind(this));
+	}
+}
+
 BettingCylinder.prototype.update = function(delta){
 	var delta = this.clock.getDelta();
 
@@ -165,8 +194,28 @@ BettingCylinder.prototype.update = function(delta){
 	this.animtimer += delta;
 	var allcomplete = true;
 	for(var i=0;i<this.circles.length;i++){
+		//advance circle animation
 		this.circles[i].update(delta);
-		//update circles
+
+		//After a circle goes offscreen, mark it as requiring a new texture
+		//The < 3.0 check is required so that this if-statement and the next one don't continually cancel each other out
+		if( !this.circles[i].isDead && (this.circles[i].t % (Math.PI*2)) > 1.5 && (this.circles[i].t % (Math.PI*2)) < 3.0){
+			this.circles[i].isDead = true;
+		}
+		if(this.circles[i].isDead && (this.circles[i].t % (Math.PI*2)) > 5.9 ){
+			//circle is about to come onscreen, choose a new image
+			var newTex;
+			if(this.loadedTextures.length > 0){
+				newTex = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)]
+				this.circles[i].mesh.material.map = newTex;
+			}else{
+				//if no textures are loaded for some reason (weird concurrency issue? setNewImgList not called?) grab one from the default textures
+				newTex = this.defaultTextures[Math.floor(Math.random()*this.defaultTextures.length)]
+				this.circles[i].mesh.material.map = newTex;
+			}
+			this.circles[i].isDead = false;
+		}
+		this.circles[0].mesh.material.color.g = 0;
 	}
 
 	//update BG
@@ -176,7 +225,7 @@ BettingCylinder.prototype.update = function(delta){
 	}
 
 	//if any circles are dead
-
+		
 		//create a new circle with a random user's image
 
 	this.renderer.render( this.scene, this.camera);
@@ -193,7 +242,7 @@ function BettingCircle(tex, scene, z, initialRotation){
 				///and ??? should be offscreen, fully scrolled
 	this.z = z;
 
-	this.isDead = false;
+	this.isDead = true;
 	this.fullRotationTime = 20; //amount of time in s to make a full 360 degree rotation
 
 	this.radius = 5;
