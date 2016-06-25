@@ -1,4 +1,9 @@
 "use strict";
+
+/*
+Example code illustrating how BettingCylinder.js should be used.
+In this case, this file is bigger than I would like to accomodate the fly-controls copypasted at the bottom and set to toggle upon clicking. That's just for debugging and not part of the example.*/
+
 var bettinganim;
 var controls;
 document.body.onload = function(){
@@ -21,6 +26,7 @@ function update(){
 	requestAnimationFrame(update);
 }
 
+//toggle fly controls on click
 var flyEnabled = false;
 document.body.onclick = function(){
 	flyEnabled = !flyEnabled;

@@ -35,9 +35,10 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 
 	//experiment: shaders to get the triangle pulsating!
 	//Vertex colors are set up in the following way:
-	//All triangle centers have a green of 1.0
+	//All triangle centers have a red of 1.0
 	//All non-triangle centers have colors of 0x000000
 	//Every up-facing triangle has a blue of 1.0, while down-facing ones have a color of 0.0
+	//Combined, these attributes are used to generate the scrolling effect by moving either backwards or forwards through getcolor() depending on the blue channel, the exact amount being determined by the red to get a nice triangular fade.
 	var vShader = [
 	"varying vec3 vNormal;",
 	"varying vec3 vPosition;",
@@ -57,9 +58,9 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	"varying vec3 vPosition;",
 	"varying vec3 vcolor;",
 	"uniform float time;",
+	//Function to create the color ramp
+	//The vectors returned are in rgb; changing this function would change the color bands
 	"vec3 getcolor(float time){",
-		"float lerpfrac = clamp(sin(time),0.0,1.0);",
-		"lerpfrac = mod(floor(time + 0.5),2.0);",
 		"float colorindex = mod(floor(time + 0.5),6.0);",
 		"if(colorindex < 1.0){",
 			"return vec3(0.65, 0.70, 0.71);",
@@ -79,22 +80,22 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 			"return vec3(0.71, 0.60, 0.58);",
 		"}",
 		
-		"return vec3(0.71, 0.60, 0.58);", //chrome requires guaranteed returning
+		//return a default color to satisfy chrome
+		"return vec3(0.71, 0.60, 0.58);",
 
 	"}",
 
-	//helper function whose graph looks like:
+	//helper function whose graph is supposed to look like:
 	//    _/
 	//   /
+	//Used to help smooth out the transition between outward and inward triangles
+	//I have no idea why a negative value gets the effect I want; I suspect the function is wrong but it works out in the end so I guess it stays
 	"float rampwaitramp(float x, float waitsize){",
 		"return step(0.0,x-waitsize)*(x-waitsize) + step(0.0,-x-waitsize)*(x+waitsize);",
 	"}",
 
 	"void main(){",
-	//"  gl_FragColor = vec4(vcolor.rgb, 1.0);", //pure vertex colors
-
 	"    float isOutwardstri = (vcolor.b*2.0-1.0);", //1.0 if the triangle is going outwards, lerps to -1.0 if not, 0.0 at edges
-	"    float boolisOutwardstri = sign(clamp(vcolor.b,0.0,1.0));", //guaranteed to be only 1.0 or 0.0
 	"    gl_FragColor = vec4(getcolor(rampwaitramp(vcolor.r * isOutwardstri * 2.0,-0.1) + time/2.0),1.0);",
 	"}"].join("\n")
 
@@ -105,6 +106,7 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 		}
 	};
 
+	//load the mesh and its vertex colors
 	new THREE.ColladaLoader().load(this.asset_folder+"bgtriangles.dae",function(mesh){
 		this.colorfulbox = mesh.scene.children[0];
 		this.colorfulbox.material = new THREE.ShaderMaterial({
@@ -117,8 +119,6 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 		this.colorfulbox.uniforms = uniforms;
 		this.scene.add( this.colorfulbox );
 	}.bind(this));
-
-
                                          
 	// Renderer
 	var clear_color = clear_color || 0x000000;
