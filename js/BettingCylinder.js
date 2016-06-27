@@ -183,14 +183,15 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 	this.texturecache = new TextureCache();
 	this.loadedTextures = [];
 
-	this.defaultTextureURLs = [this.asset_folder+"red.png",this.asset_folder+"gray.png",this.asset_folder+"blue.png"];
+	this.defaultTextureURLs = [[this.asset_folder+"red.png",""],[this.asset_folder+"gray.png",""],[this.asset_folder+"blue.png",""]];
 	this.defaultTextures = [];
 
 	//load the default textures
 	//we're about to call this.texturecache.loadTexture on the same textures below; this is okay because TextureCache should ensure only one request is made per texture (and I'm lazy)
 	for(let i=0;i<this.defaultTextureURLs.length;i++){
-		this.texturecache.loadTexture(this.defaultTextureURLs[i],function(tex){
-			this.defaultTextures.push(tex);
+		let url_user_pair = this.defaultTextureURLs[i];
+		this.texturecache.loadTexture(url_user_pair[0],function(tex){
+			this.defaultTextures.push([tex,url_user_pair[1]]);
 		}.bind(this));
 	}
 	
@@ -203,7 +204,7 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 		for(let z = -2; z < 6; z++){
 			//to start, load the default textures
 			let randIndex = parseInt(Math.random()*this.defaultTextureURLs.length);
-			let url = this.defaultTextureURLs[randIndex];
+			let url = this.defaultTextureURLs[randIndex][0];
 			
 			this.texturecache.loadTexture(url,function(tex){
 				//push new circle
@@ -214,18 +215,21 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 	}
 
 }
-BettingCylinder.prototype.setNewImgList = function(imglist, includeDefaults){
+BettingCylinder.prototype.setNewImgList = function(img_user_list, includeDefaults){
 	//Function to set the textures to be used given an array containing the URLs
-	//imglist: an array of image URLs
+	//imglist: an array of [[image URL, username to display]...]
 	//After being loaded, new circles about to appear onscreen will be given a random texture from the URLs provided.
 	includeDefaults = includeDefaults || true;
 
 	this.loadedTextures = [];
-	if(includeDefaults)imglist = imglist.concat(this.defaultTextureURLs);
+	if(includeDefaults)img_user_list = img_user_list.concat(this.defaultTextureURLs);
 
-	for(var i=0;i<imglist.length;i++){
-		this.texturecache.loadTexture(imglist[i],function(tex){
-			this.loadedTextures.push(tex);
+	//Load everything
+	for(var i=0;i<img_user_list.length;i++){
+		let user = img_user_list[i][1]
+		this.texturecache.loadTexture(img_user_list[i][0],function(tex){
+			//loadedTextures is an array of [tex, username_to_display], one for each texture
+			this.loadedTextures.push([tex, user]);
 		}.bind(this));
 	}
 }
@@ -247,17 +251,26 @@ BettingCylinder.prototype.update = function(delta){
 		}
 		if(this.circles[i].isDead && (this.circles[i].t % (Math.PI*2)) > 5.9 ){
 			//circle is about to come onscreen, choose a new image
-			var newTex;
+			var tex_user_pair;
 			if(this.loadedTextures.length > 0){
-				newTex = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)]
-				this.circles[i].circlemesh.material.map = newTex;
+				tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)]
+				this.circles[i].circlemesh.material.map = tex_user_pair[0];
+
+				//If we're showing usernames, generate a new name texture and show it below the image
 				if(this.show_user_names){
-					this.circles[i].setNameTex(bettinganim.generateNameTex("randomuser123"));
+					if(tex_user_pair[1] != ""){
+						//Generate a texture and show the nameplate
+						this.circles[i].setNameTex(bettinganim.generateNameTex(tex_user_pair[1]));
+					}else{
+						//An empty string = hide the nameplate
+						this.circles[i].hideName();
+					}
 				}
 			}else{
 				//if no textures are loaded for some reason (weird concurrency issue? setNewImgList not called?) grab one from the default textures
-				newTex = this.defaultTextures[Math.floor(Math.random()*this.defaultTextures.length)]
-				this.circles[i].circlemesh.material.map = newTex;
+				//Don't show names for default textures
+				tex_user_pair = this.defaultTextures[Math.floor(Math.random()*this.defaultTextures.length)];
+				this.circles[i].circlemesh.material.map = tex_user_pair[0];
 			}
 			this.circles[i].isDead = false;
 		}
