@@ -219,7 +219,7 @@ BettingCylinder.prototype.setNewImgList = function(img_user_list, includeDefault
 	//Function to set the textures to be used given an array containing the URLs
 	//imglist: an array of [[image URL, username to display]...]
 	//After being loaded, new circles about to appear onscreen will be given a random texture from the URLs provided.
-	includeDefaults = includeDefaults || true;
+	if(includeDefaults === undefined)includeDefaults = true;
 
 	this.loadedTextures = [];
 	if(includeDefaults)img_user_list = img_user_list.concat(this.defaultTextureURLs);
@@ -251,9 +251,8 @@ BettingCylinder.prototype.update = function(delta){
 		}
 		if(this.circles[i].isDead && (this.circles[i].t % (Math.PI*2)) > 5.9 ){
 			//circle is about to come onscreen, choose a new image
-			var tex_user_pair;
 			if(this.loadedTextures.length > 0){
-				tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)]
+				let tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)];
 				this.circles[i].circlemesh.material.map = tex_user_pair[0];
 
 				//If we're showing usernames, generate a new name texture and show it below the image
@@ -269,7 +268,7 @@ BettingCylinder.prototype.update = function(delta){
 			}else{
 				//if no textures are loaded for some reason (weird concurrency issue? setNewImgList not called?) grab one from the default textures
 				//Don't show names for default textures
-				tex_user_pair = this.defaultTextures[Math.floor(Math.random()*this.defaultTextures.length)];
+				var tex_user_pair = this.defaultTextures[Math.floor(Math.random()*this.defaultTextures.length)];
 				this.circles[i].circlemesh.material.map = tex_user_pair[0];
 			}
 			this.circles[i].isDead = false;
