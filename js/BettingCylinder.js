@@ -1,6 +1,6 @@
 "use strict";
 
-function BettingCylinder(canvas_elem, clear_color, asset_folder){
+function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder){
 	//Class to control the result hexagon-tile animation
 	//canvas_elem: a <canvas> element to draw the animation to
 	//asset_folder: the folder where red.png, blue.png, gray.png, hex.obj, and hex.mtl are stored. Must end with "/"! By default: "static/bettingcylinderanim/"
@@ -8,6 +8,7 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.circles = [];
 
 	this.asset_folder = asset_folder || "static/bettingcylinderanim/"
+	this.show_user_names = show_user_names || true;
 
 	//Clock to get deltas for each frame
 	this.clock = new THREE.Clock();
@@ -36,8 +37,8 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.scene.add( this.light );
 
 	//Add a colorful gradient
-	this.gradient = new THREE.Mesh(new THREE.PlaneGeometry(2,2,2,2), new THREE.MeshPhongMaterial({ color: 0xffffff, vertexColors: THREE.VertexColors, opacity: 0.0, transparent: true, blending: THREE.MultiplyBlending}));
-	this.gradient2 = new THREE.Mesh(new THREE.PlaneGeometry(2,2,1,1), new THREE.MeshPhongMaterial({ color: 0xffffff, vertexColors: THREE.VertexColors, opacity: 0.4, transparent: true, blending: THREE.AdditiveBlending}));
+	this.gradient = new THREE.Mesh(new THREE.PlaneGeometry(2,2,2,2), new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: THREE.VertexColors, opacity: 0.0, transparent: true, blending: THREE.MultiplyBlending}));
+	this.gradient2 = new THREE.Mesh(new THREE.PlaneGeometry(2,2,1,1), new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: THREE.VertexColors, opacity: 0.4, transparent: true, blending: THREE.AdditiveBlending}));
 
 	var bottomLeftColor = 0xaaaaff;
 	var topLeftColor = 0xffffaa;
@@ -249,11 +250,14 @@ BettingCylinder.prototype.update = function(delta){
 			var newTex;
 			if(this.loadedTextures.length > 0){
 				newTex = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)]
-				this.circles[i].mesh.material.map = newTex;
+				this.circles[i].circlemesh.material.map = newTex;
+				if(this.show_user_names){
+					this.circles[i].setNameTex(bettinganim.generateNameTex("randomuser123"));
+				}
 			}else{
 				//if no textures are loaded for some reason (weird concurrency issue? setNewImgList not called?) grab one from the default textures
 				newTex = this.defaultTextures[Math.floor(Math.random()*this.defaultTextures.length)]
-				this.circles[i].mesh.material.map = newTex;
+				this.circles[i].circlemesh.material.map = newTex;
 			}
 			this.circles[i].isDead = false;
 		}
@@ -274,10 +278,6 @@ BettingCylinder.prototype.update = function(delta){
 }
 
 
-
-
-
-
 function BettingCircle(initialtex, scene, z, initialRotation){
 	this.t = initialRotation || 0; //from 0 to ???
 				//0 should be about to be shown to the camera,
@@ -289,15 +289,36 @@ function BettingCircle(initialtex, scene, z, initialRotation){
 
 	this.radius = 5;
 
-	this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshPhongMaterial({color:0xffffff,map: initialtex}));
-	scene.add(this.mesh);
+	this.circlemesh = new THREE.Mesh(this.circlegeometry, new THREE.MeshPhongMaterial({color:0xffffff,map: initialtex}));
+	scene.add(this.circlemesh);
+	
+	this.namemesh = new THREE.Mesh(this.namegeometry, new THREE.MeshBasicMaterial({color:0xffffff,opacity: 0.0, transparent: true}));
+
+	scene.add(this.namemesh);
+
 	this.update(0);
 }
 
-BettingCircle.prototype.geometry = new THREE.CircleGeometry(0.25,30);
+BettingCircle.prototype.circlegeometry = new THREE.CircleGeometry(0.25,30);
+BettingCircle.prototype.namegeometry = new THREE.PlaneGeometry(0.5,0.8);
+
+
+BettingCircle.prototype.setNameTex = function(tex){
+	this.namemesh.material.map = tex;
+	this.namemesh.material.needsUpdate = true;
+	this.namemesh.material.opacity = 1.0;
+}
+BettingCircle.prototype.hideName = function(){
+	this.namemesh.material.opacity = 0.0;
+}
 
 BettingCircle.prototype.update = function(delta){
-	this.mesh.position.set(this.radius*Math.cos(this.t - Math.PI/2),this.z,this.radius*Math.sin(this.t - Math.PI/2));
-	this.mesh.rotation.set(0,-this.t,0);
+	this.circlemesh.position.set(this.radius*Math.cos(this.t - Math.PI/2),this.z,this.radius*Math.sin(this.t - Math.PI/2));
+	this.circlemesh.rotation.set(0,-this.t,0);
+
+	//set the name to follow the circle a bit closer to the center, but farther down
+	this.namemesh.position.set((this.radius - 0.01)*Math.cos(this.t - Math.PI/2),this.z - 0.25,(this.radius - 0.01)*Math.sin(this.t - Math.PI/2));
+	this.namemesh.rotation.copy(this.circlemesh.rotation);
+
 	this.t += delta * Math.PI/ this.fullRotationTime;
 }

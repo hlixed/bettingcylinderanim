@@ -8,10 +8,9 @@ var bettinganim;
 var controls;
 document.body.onload = function(){
 	var canvas_elem = document.getElementById("bettingCanvas");
-	bettinganim = new BettingCylinder(canvas_elem);
+	bettinganim = new BettingCylinder(canvas_elem, true);
 	//hexes.beginAppearAnim(true, "gray");
 	update();
-
 
 	//setup debug fly controls
 	controls = new THREE.FlyControls(bettinganim.camera);
