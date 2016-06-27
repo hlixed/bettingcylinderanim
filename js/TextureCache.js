@@ -25,7 +25,6 @@ TextureCache.prototype.loadTexture = function(image_url, callback){
 		this._cache[image_url] = "loading";
 		//load the texture
 		this.loader.load(image_url,function(tex){
-			console.log(image_url);
 			this._cache[image_url] = tex;
 
 			//if other callbacks exist, call them
