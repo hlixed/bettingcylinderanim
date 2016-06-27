@@ -260,7 +260,7 @@ BettingCylinder.prototype.update = function(delta){
 				if(this.show_user_names){
 					if(tex_user_pair[1] != ""){
 						//Generate a texture and show the nameplate
-						this.circles[i].setNameTex(bettinganim.generateNameTex(tex_user_pair[1]));
+						this.circles[i].setNameTex(this.generateNameTex(tex_user_pair[1]));
 					}else{
 						//An empty string = hide the nameplate
 						this.circles[i].hideName();
@@ -282,10 +282,6 @@ BettingCylinder.prototype.update = function(delta){
 		this.colorfulbox.uniforms.time.value = this.animtimer;
 		this.colorfulbox.rotation.z += delta/20;
 	}
-
-	//if any circles are dead
-		
-		//create a new circle with a random user's image
 
 	this.renderer.render( this.scene, this.camera);
 }
