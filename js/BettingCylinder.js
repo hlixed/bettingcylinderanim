@@ -8,7 +8,7 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 	this.circles = [];
 
 	this.asset_folder = asset_folder || "static/bettingcylinderanim/"
-	this.show_user_names = show_user_names || true;
+	if(this.show_user_names === undefined)show_user_names = false;
 
 	//Clock to get deltas for each frame
 	this.clock = new THREE.Clock();
@@ -226,10 +226,11 @@ BettingCylinder.prototype.setNewImgList = function(img_user_list, includeDefault
 
 	//Load everything
 	for(var i=0;i<img_user_list.length;i++){
-		let user = img_user_list[i][1]
+		let user = img_user_list[i][1];
+		let color = img_user_list[i][2]; //may be undefined
 		this.texturecache.loadTexture(img_user_list[i][0],function(tex){
 			//loadedTextures is an array of [tex, username_to_display], one for each texture
-			this.loadedTextures.push([tex, user]);
+			this.loadedTextures.push([tex, user, color]);
 		}.bind(this));
 	}
 }
@@ -259,7 +260,9 @@ BettingCylinder.prototype.update = function(delta){
 				if(this.show_user_names){
 					if(tex_user_pair[1] != ""){
 						//Generate a texture and show the nameplate
-						this.circles[i].setNameTex(this.generateNameTex(tex_user_pair[1]));
+
+						var color = tex_user_pair[2]; //may be undefined
+						this.circles[i].setNameTex(this.generateNameTex(tex_user_pair[1], color));
 					}else{
 						//An empty string = hide the nameplate
 						this.circles[i].hideName();
@@ -273,7 +276,6 @@ BettingCylinder.prototype.update = function(delta){
 			}
 			this.circles[i].isDead = false;
 		}
-		//this.circles[0].mesh.material.color.g = 0;
 	}
 
 	//update BG
@@ -286,6 +288,7 @@ BettingCylinder.prototype.update = function(delta){
 }
 
 
+//Class that controls the circles themselves, along with the nameplates
 function BettingCircle(initialtex, scene, z, initialRotation){
 	this.t = initialRotation || 0; //from 0 to ???
 				//0 should be about to be shown to the camera,
@@ -309,7 +312,6 @@ function BettingCircle(initialtex, scene, z, initialRotation){
 
 BettingCircle.prototype.circlegeometry = new THREE.CircleGeometry(0.25,30);
 BettingCircle.prototype.namegeometry = new THREE.PlaneGeometry(0.5,0.8);
-
 
 BettingCircle.prototype.setNameTex = function(tex){
 	this.namemesh.material.map = tex;

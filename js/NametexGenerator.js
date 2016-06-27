@@ -1,6 +1,8 @@
 //Functions for generating username label textures
 
-BettingCylinder.prototype.generateNameTex = function(text){
+BettingCylinder.prototype.generateNameTex = function(text, nameColor){
+	var nameColor = nameColor || "000000";
+
 	this.currentCanvasNo = (this.currentCanvasNo+1)%6;
 	let i = this.currentCanvasNo;
 
@@ -21,7 +23,8 @@ BettingCylinder.prototype.generateNameTex = function(text){
 	this.textRendererCtx[i].closePath();
 
 	//Fill text
-	this.textRendererCtx[i].fillStyle = '#000'; 
+	this.textRendererCtx[i].fillStyle = '#'+nameColor;
+	this.textRendererCtx[i].strokeStyle = '#000'; 
 	this.textRendererCtx[i].textAlign = "center";
 	this.textRendererCtx[i].textBaseline = "middle";           
 	this.textRendererCtx[i].font = '50px serif';    
