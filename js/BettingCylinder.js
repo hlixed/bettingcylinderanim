@@ -15,7 +15,6 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 
 	//threejs constructs
 	this.scene = new THREE.Scene();
-	this.scene.add( new THREE.AmbientLight( 0xaaaaaa) );
 
 	//an aspect ratio of 3.5 or above will show things that shouldn't be shown
 	this.camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1,200);
@@ -29,9 +28,42 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.scene.add(this.camera);
 
 	//add some light
-	this.light =  new THREE.DirectionalLight( 0xffffff, 0.4) 
-	this.light.position.set(0,0,3);
+	this.scene.add( new THREE.AmbientLight( 0x555555) );
+
+	this.light =  new THREE.DirectionalLight( 0xffffff, 0.6) 
+	this.light.position.set(0,0,2);
+	this.light.target.position.set(-3,0,5);
 	this.scene.add( this.light );
+
+	//Add a colorful gradient
+	this.gradient = new THREE.Mesh(new THREE.PlaneGeometry(2,2,2,2), new THREE.MeshPhongMaterial({ color: 0xffffff, vertexColors: THREE.VertexColors, opacity: 0.0, transparent: true, blending: THREE.MultiplyBlending}));
+	this.gradient2 = new THREE.Mesh(new THREE.PlaneGeometry(2,2,1,1), new THREE.MeshPhongMaterial({ color: 0xffffff, vertexColors: THREE.VertexColors, opacity: 0.4, transparent: true, blending: THREE.AdditiveBlending}));
+
+	var bottomLeftColor = 0xaaaaff;
+	var topLeftColor = 0xffffaa;
+	var topRightColor = 0xffffff;
+	var bottomRightColor = 0xffaaaa;
+	var bottomMiddleColor = 0xffcccc;
+	var defaultCol = 0xaaaaaa;
+	var topMiddleColor = 0x909055;
+
+	this.gradient.geometry.faces[0].vertexColors = [new THREE.Color(topLeftColor), new THREE.Color(defaultCol), new THREE.Color(topMiddleColor)];
+	this.gradient.geometry.faces[1].vertexColors = [new THREE.Color(defaultCol), new THREE.Color(defaultCol), new THREE.Color(topMiddleColor)];
+	this.gradient.geometry.faces[2].vertexColors = [new THREE.Color(topMiddleColor), new THREE.Color(defaultCol), new THREE.Color(topRightColor)];
+	this.gradient.geometry.faces[3].vertexColors = [new THREE.Color(defaultCol), new THREE.Color(bottomMiddleColor), new THREE.Color(topRightColor)];
+	this.gradient.geometry.faces[4].vertexColors = [new THREE.Color(defaultCol), new THREE.Color(bottomLeftColor), new THREE.Color(defaultCol)];
+	this.gradient.geometry.faces[5].vertexColors = [new THREE.Color(bottomLeftColor), new THREE.Color(defaultCol), new THREE.Color(defaultCol)];
+	this.gradient.geometry.faces[6].vertexColors = [new THREE.Color(defaultCol), new THREE.Color(defaultCol), new THREE.Color(bottomMiddleColor)];
+	this.gradient.geometry.faces[7].vertexColors = [new THREE.Color(defaultCol), new THREE.Color(bottomRightColor), new THREE.Color(bottomMiddleColor)];
+	this.gradient.position.z = -1.1;
+
+	this.gradient2.geometry.faces[0].vertexColors = [new THREE.Color(0x000000), new THREE.Color(0x000000), new THREE.Color(0xffffff)];
+	this.gradient2.geometry.faces[1].vertexColors = [new THREE.Color(0x000000), new THREE.Color(0x000000), new THREE.Color(0xffffff)];
+	this.gradient2.position.z = -1.05;
+
+	//have the gradients appear directly in front of the camera
+	this.camera.add(this.gradient);
+	this.camera.add(this.gradient2);
 
 	//experiment: shaders to get the triangle pulsating!
 	//Vertex colors are set up in the following way:
@@ -127,6 +159,16 @@ function BettingCylinder(canvas_elem, clear_color, asset_folder){
 	this.renderer.setSize( window.innerWidth, window.innerHeight);
 	this.renderer.setClearColor( clear_color, 0);
 
+	window.addEventListener( 'resize', function(){
+		this.renderer.setSize( window.innerWidth, window.innerHeight );
+
+		this.camera.aspect = (window.innerWidth / window.innerHeight);
+
+		this.renderer.domElement.width = window.innerWidth;
+		this.renderer.domElement.height = window.innerHeight;
+
+	}.bind(this), false );
+
 	//queue async texture loads
 
 	/*
@@ -215,7 +257,7 @@ BettingCylinder.prototype.update = function(delta){
 			}
 			this.circles[i].isDead = false;
 		}
-		this.circles[0].mesh.material.color.g = 0;
+		//this.circles[0].mesh.material.color.g = 0;
 	}
 
 	//update BG
@@ -247,7 +289,7 @@ function BettingCircle(initialtex, scene, z, initialRotation){
 
 	this.radius = 5;
 
-	this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({color:0xffffff,map: initialtex}));
+	this.mesh = new THREE.Mesh(this.geometry, new THREE.MeshPhongMaterial({color:0xffffff,map: initialtex}));
 	scene.add(this.mesh);
 	this.update(0);
 }
