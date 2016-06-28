@@ -41,3 +41,9 @@ TextureCache.prototype.loadTexture = function(image_url, callback){
 	}
 
 }
+
+TextureCache.prototype.clearCache = function(){
+	for(var i in this._cache){
+		delete this._cache[i];
+	}
+}

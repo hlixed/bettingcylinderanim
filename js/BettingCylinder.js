@@ -8,7 +8,9 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 	this.circles = [];
 
 	this.asset_folder = asset_folder || "static/bettingcylinderanim/"
-	if(this.show_user_names === undefined)show_user_names = false;
+
+	this.show_user_names = show_user_names;
+	if(this.show_user_names === undefined)this.show_user_names = false;
 
 	//Clock to get deltas for each frame
 	this.clock = new THREE.Clock();
@@ -224,6 +226,8 @@ BettingCylinder.prototype.setNewImgList = function(img_user_list, includeDefault
 	this.loadedTextures = [];
 	if(includeDefaults)img_user_list = img_user_list.concat(this.defaultTextureURLs);
 
+	this.texturecache.clearCache();	
+
 	//Load everything
 	for(var i=0;i<img_user_list.length;i++){
 		let user = img_user_list[i][1];
@@ -244,7 +248,7 @@ BettingCylinder.prototype.update = function(delta){
 	for(var i=0;i<this.circles.length;i++){
 		//advance circle animation
 		this.circles[i].update(delta);
-
+		
 		//After a circle goes offscreen, mark it as requiring a new texture
 		//The < 3.0 check is required so that this if-statement and the next one don't continually cancel each other out
 		if( !this.circles[i].isDead && (this.circles[i].t % (Math.PI*2)) > 1.5 && (this.circles[i].t % (Math.PI*2)) < 3.0){
@@ -253,8 +257,9 @@ BettingCylinder.prototype.update = function(delta){
 		if(this.circles[i].isDead && (this.circles[i].t % (Math.PI*2)) > 5.9 ){
 			//circle is about to come onscreen, choose a new image
 			if(this.loadedTextures.length > 0){
+				
 				let tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)];
-				this.circles[i].circlemesh.material.map = tex_user_pair[0];
+				//this.circles[i].circlemesh.material.map = tex_user_pair[0];
 
 				//If we're showing usernames, generate a new name texture and show it below the image
 				if(this.show_user_names){
