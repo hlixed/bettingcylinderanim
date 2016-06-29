@@ -259,7 +259,7 @@ BettingCylinder.prototype.update = function(delta){
 			if(this.loadedTextures.length > 0){
 				
 				let tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)];
-				//this.circles[i].circlemesh.material.map = tex_user_pair[0];
+				this.circles[i].circlemesh.material.map = tex_user_pair[0];
 
 				//If we're showing usernames, generate a new name texture and show it below the image
 				if(this.show_user_names){
