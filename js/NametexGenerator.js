@@ -3,7 +3,7 @@
 BettingCylinder.prototype.generateNameTex = function(text, nameColor){
 	var nameColor = nameColor || "000000";
 
-	this.currentCanvasNo = (this.currentCanvasNo+1)%6;
+	this.currentCanvasNo = (this.currentCanvasNo+1)%this.numTextRenderers;
 	let i = this.currentCanvasNo;
 
 	this.textRenderer[i].width = 512; //setting the width or height clears the canvas
@@ -39,8 +39,10 @@ BettingCylinder.prototype.generateNameTex = function(text, nameColor){
 //create multiple canvases so they don't interfere with one another
 BettingCylinder.prototype.textRenderer = [];
 BettingCylinder.prototype.textRendererCtx = [];
+//Amount of canvases to create. More should mean there's less of a chance to get the wrong label, ideally this should be more than the number of circles in a vertical line.
+BettingCylinder.prototype.numTextRenderers = 10;
 
-for(var i=0;i<6;i++){
+for(var i=0;i<BettingCylinder.prototype.numTextRenderers;i++){
 	BettingCylinder.prototype.textRenderer.push(document.createElement( 'canvas' ));
 	BettingCylinder.prototype.textRenderer[i].width = 512;
 	BettingCylinder.prototype.textRenderer[i].height = 512;
