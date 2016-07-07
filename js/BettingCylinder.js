@@ -321,7 +321,7 @@ BettingCircle.prototype.namegeometry = new THREE.PlaneGeometry(0.5,0.8);
 
 BettingCircle.prototype.setNameTex = function(tex){
 	this.namemesh.material.map = tex;
-	this.namemesh.material.needsUpdate = true;
+	//this.namemesh.material.needsUpdate = true;
 	this.namemesh.visible = true;
 }
 BettingCircle.prototype.hideName = function(){
