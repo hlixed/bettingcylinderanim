@@ -308,7 +308,8 @@ function BettingCircle(initialtex, scene, z, initialRotation){
 	this.circlemesh = new THREE.Mesh(this.circlegeometry, new THREE.MeshPhongMaterial({color:0xffffff,map: initialtex}));
 	scene.add(this.circlemesh);
 	
-	this.namemesh = new THREE.Mesh(this.namegeometry, new THREE.MeshBasicMaterial({color:0xffffff,opacity: 0.0, transparent: true}));
+	this.namemesh = new THREE.Mesh(this.namegeometry, new THREE.MeshBasicMaterial({color:0xffffff,transparent: true}));
+	this.namemesh.visible = false; //Don't show the namemesh until a texture map has been set
 
 	scene.add(this.namemesh);
 
@@ -321,10 +322,10 @@ BettingCircle.prototype.namegeometry = new THREE.PlaneGeometry(0.5,0.8);
 BettingCircle.prototype.setNameTex = function(tex){
 	this.namemesh.material.map = tex;
 	this.namemesh.material.needsUpdate = true;
-	this.namemesh.material.opacity = 1.0;
+	this.namemesh.visible = true;
 }
 BettingCircle.prototype.hideName = function(){
-	this.namemesh.material.opacity = 0.0;
+	this.namemesh.material.visible = false;
 }
 
 BettingCircle.prototype.update = function(delta){
