@@ -259,6 +259,7 @@ BettingCylinder.prototype.update = function(delta){
 			if(this.loadedTextures.length > 0){
 				
 				let tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)];
+
 				this.circles[i].circlemesh.material.map = tex_user_pair[0];
 
 				//If we're showing usernames, generate a new name texture and show it below the image
@@ -320,6 +321,14 @@ BettingCircle.prototype.circlegeometry = new THREE.CircleGeometry(0.25,30);
 BettingCircle.prototype.namegeometry = new THREE.PlaneGeometry(0.5,0.8);
 
 BettingCircle.prototype.setNameTex = function(tex){
+	//Set the texture for this circle's username nameplate
+
+	//First, free texture memory of previous texture
+	if(this.namemesh.material.map instanceof THREE.Texture){
+		this.namemesh.material.map.dispose();
+	}
+
+	//Set new texture
 	this.namemesh.material.map = tex;
 	//this.namemesh.material.needsUpdate = true;
 	this.namemesh.visible = true;
