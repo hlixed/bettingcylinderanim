@@ -260,7 +260,6 @@ BettingCylinder.prototype.update = function(delta){
 				
 				let tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)];
 
-
 				//First, free texture memory of previous texture
 				if(this.circles[i].circlemesh.material.map instanceof THREE.Texture){
 					this.circles[i].circlemesh.material.map.dispose();
@@ -340,7 +339,7 @@ BettingCircle.prototype.setNameTex = function(tex){
 	this.namemesh.visible = true;
 }
 BettingCircle.prototype.hideName = function(){
-	this.namemesh.material.visible = false;
+	this.namemesh.visible = false;
 }
 
 BettingCircle.prototype.update = function(delta){
