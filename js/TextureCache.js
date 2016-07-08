@@ -44,6 +44,10 @@ TextureCache.prototype.loadTexture = function(image_url, callback){
 
 TextureCache.prototype.clearCache = function(){
 	for(var i in this._cache){
+		//Three.js textures will stick around unless dispose() is called, which frees the texture memory
+		if(this._cache[i] instanceof THREE.Texture){
+			this._cache[i].dispose();
+		}
 		delete this._cache[i];
 	}
 }

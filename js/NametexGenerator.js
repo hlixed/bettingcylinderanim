@@ -1,12 +1,16 @@
 //Functions for generating username label textures
 
 BettingCylinder.prototype.generateNameTex = function(text, nameColor){
+	//Function to generate a nameplate texture given a texture and a color in hex notation without the "#", such as "ff0000" for red
+
 	var nameColor = nameColor || "000000";
 
+	//Switch canvases per call to hopefully avoid using a canvas that a different call to this function is using
 	this.currentCanvasNo = (this.currentCanvasNo+1)%this.numTextRenderers;
 	let i = this.currentCanvasNo;
 
-	this.textRenderer[i].width = 512; //setting the width or height clears the canvas
+	//clear the canvas by setting the width or height because browsers are ridiculous
+	this.textRenderer[i].width = 512;
 
 	//Fill in a rounded oval
 	this.textRendererCtx[i].strokeStyle = '1px #000'; 
@@ -31,6 +35,7 @@ BettingCylinder.prototype.generateNameTex = function(text, nameColor){
 	this.textRendererCtx[i].fillText(text, this.textRenderer[i].width / 2, this.textRenderer[i].height / 2, this.textRenderer[i].width); 
 	this.textRendererCtx[i].strokeText(text, this.textRenderer[i].width / 2, this.textRenderer[i].height / 2, this.textRenderer[i].width);
 	
+	//Make a texture from the canvas and return it!
 	var tex = new THREE.Texture( this.textRenderer[i] );
 	tex.needsUpdate = true;
 	return tex;
@@ -39,6 +44,7 @@ BettingCylinder.prototype.generateNameTex = function(text, nameColor){
 //create multiple canvases so they don't interfere with one another
 BettingCylinder.prototype.textRenderer = [];
 BettingCylinder.prototype.textRendererCtx = [];
+
 //Amount of canvases to create. More should mean there's less of a chance to get the wrong label, ideally this should be more than the number of circles in a vertical line.
 BettingCylinder.prototype.numTextRenderers = 10;
 
