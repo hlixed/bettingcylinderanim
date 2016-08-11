@@ -193,6 +193,8 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 	for(let i=0;i<this.defaultTextureURLs.length;i++){
 		let url_user_pair = this.defaultTextureURLs[i];
 		this.texturecache.loadTexture(url_user_pair[0],function(tex){
+			if(tex.instanceCount === undefined)tex.instanceCount = 0;
+			tex.instanceCount++;
 			this.defaultTextures.push([tex,url_user_pair[1]]);
 		}.bind(this));
 	}
@@ -209,6 +211,8 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 			let url = this.defaultTextureURLs[randIndex][0];
 			
 			this.texturecache.loadTexture(url,function(tex){
+				if(tex.instanceCount === undefined)tex.instanceCount = 0;
+				tex.instanceCount++;
 				//push new circle
 				this.circles.push(new BettingCircle(tex,this.scene, z * (radius*2 + spacing), i));
 			}.bind(this));
@@ -233,6 +237,8 @@ BettingCylinder.prototype.setNewImgList = function(img_user_list, includeDefault
 		let user = img_user_list[i][1];
 		let color = img_user_list[i][2]; //may be undefined
 		this.texturecache.loadTexture(img_user_list[i][0],function(tex){
+			if(tex.instanceCount === undefined)tex.instanceCount = 0;
+
 			//loadedTextures is an array of [tex, username_to_display], one for each texture
 			this.loadedTextures.push([tex, user, color]);
 		}.bind(this));
@@ -260,12 +266,20 @@ BettingCylinder.prototype.update = function(delta){
 				
 				let tex_user_pair = this.loadedTextures[Math.floor(Math.random()*this.loadedTextures.length)];
 
-				//First, free texture memory of previous texture
+
+				//First, reduce instance count of previous texture, and if 0, dispose
+				//If the same texture is on more than one circle in a vertical band, instanceCount can go negative. If so, don't dispose again.
 				if(this.circles[i].circlemesh.material.map instanceof THREE.Texture){
-					this.circles[i].circlemesh.material.map.dispose();
+					this.circles[i].circlemesh.material.map.instanceCount--;
+
+					if(this.circles[i].circlemesh.material.map.instanceCount == 0){
+						this.circles[i].circlemesh.material.map.dispose();
+					}
 				}
 
+				//then, apply new texture, raising its instanceCount by 1
 				this.circles[i].circlemesh.material.map = tex_user_pair[0];
+				this.circles[i].circlemesh.material.map.instanceCount++;
 
 				//If we're showing usernames, generate a new name texture and show it below the image
 				if(this.show_user_names){
