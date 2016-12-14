@@ -12,6 +12,8 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 	this.show_user_names = show_user_names;
 	if(this.show_user_names === undefined)this.show_user_names = false;
 
+	this.fullCircleRotationTime = 20;
+
 	//Clock to get deltas for each frame
 	this.clock = new THREE.Clock();
 	this.animtimer = 0;
@@ -37,6 +39,10 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 	this.light.position.set(0,0,2);
 	this.light.target.position.set(-3,0,5);
 	this.scene.add( this.light );
+
+	//object to which all the circles are parented
+	this.circleparent = new THREE.Object3D();
+	this.scene.add(this.circleparent);
 
 	//Add a colorful gradient
 	this.gradient = new THREE.Mesh(new THREE.PlaneGeometry(2,2,2,2), new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: THREE.VertexColors, opacity: 0.0, transparent: true, blending: THREE.MultiplyBlending}));
@@ -214,7 +220,7 @@ function BettingCylinder(canvas_elem, show_user_names, clear_color, asset_folder
 				if(tex.instanceCount === undefined)tex.instanceCount = 0;
 				tex.instanceCount++;
 				//push new circle
-				this.circles.push(new BettingCircle(tex,this.scene, z * (radius*2 + spacing), i));
+				this.circles.push(new BettingCircle(tex,this.circleparent, z * (radius*2 + spacing), i));
 			}.bind(this));
 
 		}
@@ -309,31 +315,40 @@ BettingCylinder.prototype.update = function(delta){
 		this.colorfulbox.rotation.z += delta/20;
 	}
 
+	this.circleparent.rotation.y -= delta * Math.PI/ this.fullCircleRotationTime;
+
 	this.renderer.render( this.scene, this.camera);
 }
 
 
 //Class that controls the circles themselves, along with the nameplates
-function BettingCircle(initialtex, scene, z, initialRotation){
+function BettingCircle(initialtex, parentElement, z, initialRotation){
 	this.t = initialRotation || 0; //from 0 to ???
 				//0 should be about to be shown to the camera,
 				///and ??? should be offscreen, fully scrolled
 	this.z = z;
 
 	this.isDead = true;
-	this.fullRotationTime = 20; //amount of time in s to make a full 360 degree rotation
+	this.fullCircleRotationTime = 20; //amount of time in s to make a full 360 degree rotation
 
 	this.radius = 5;
 
+	//create the circle mesh
 	this.circlemesh = new THREE.Mesh(this.circlegeometry, new THREE.MeshPhongMaterial({color:0xffffff,map: initialtex}));
-	scene.add(this.circlemesh);
-	
+
+	this.circlemesh.position.set(this.radius*Math.cos(initialRotation - Math.PI/2),this.z,this.radius*Math.sin(initialRotation - Math.PI/2));
+	this.circlemesh.rotation.set(0,-initialRotation,0);
+	parentElement.add(this.circlemesh);
+
+	//create the unused name mesh
 	this.namemesh = new THREE.Mesh(this.namegeometry, new THREE.MeshBasicMaterial({color:0xffffff,transparent: true}));
 	this.namemesh.visible = false; //Don't show the namemesh until a texture map has been set
 
-	scene.add(this.namemesh);
+	//set the name to follow the circle a bit closer to the center, but farther down
+	this.namemesh.position.set((this.radius - 0.01)*Math.cos(initialRotation - Math.PI/2),this.z - 0.25,(this.radius - 0.01)*Math.sin(initialRotation - Math.PI/2));
+	this.namemesh.rotation.copy(this.circlemesh.rotation);
 
-	this.update(0);
+	parentElement.add(this.namemesh);
 }
 
 BettingCircle.prototype.circlegeometry = new THREE.CircleGeometry(0.25,30);
@@ -357,12 +372,6 @@ BettingCircle.prototype.hideName = function(){
 }
 
 BettingCircle.prototype.update = function(delta){
-	this.circlemesh.position.set(this.radius*Math.cos(this.t - Math.PI/2),this.z,this.radius*Math.sin(this.t - Math.PI/2));
-	this.circlemesh.rotation.set(0,-this.t,0);
 
-	//set the name to follow the circle a bit closer to the center, but farther down
-	this.namemesh.position.set((this.radius - 0.01)*Math.cos(this.t - Math.PI/2),this.z - 0.25,(this.radius - 0.01)*Math.sin(this.t - Math.PI/2));
-	this.namemesh.rotation.copy(this.circlemesh.rotation);
-
-	this.t += delta * Math.PI/ this.fullRotationTime;
+	this.t += delta * Math.PI/ this.fullCircleRotationTime;
 }
